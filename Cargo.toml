@@ -1,0 +1,55 @@
+[package]
+name = "docker-log-emitter"
+version = "0.1.0"
+edition = "2021"
+authors = ["Dario Mehlich"]
+description = "Emits container logs from Docker-compatible runtime engines in a syslog format"
+license = "AGPL-3"
+readme = "README.md"
+repository = "https://github.com/hammer065/docker-log-emitter"
+
+[dependencies]
+lazy_static = "1.5"
+chrono = "0.4"
+hostname = "0.4"
+bollard = "0.18"
+
+tokio = { version = "1.41", features = ["macros", "rt-multi-thread", "signal", "parking_lot", "sync", "rt", "net", "fs"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+futures-util = { version = "0.3" }
+
+tracing = { version = "0.1", features = ["log"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+
+# Feature: exec-by-pid
+sysinfo = { version = "0.32", optional = true }
+
+# Feature: systemd
+tracing-journald = { version = "0.3", optional = true }
+[target.'cfg(target_os = "linux")'.dependencies]
+libsystemd = { version = "0.7", optional = true }
+
+
+[features]
+"default" = ["full"]
+"full" = ["systemd", "exec-by-pid"]
+"systemd" = ["dep:libsystemd", "dep:tracing-journald"]
+"exec-by-pid" = ["dep:sysinfo"]
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+debug = false
+strip = true
+codegen-units = 1
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+pedantic = "deny"
+nursery = "deny"
+mod_module_files = { level = "deny", priority = 1 }
+unwrap_used = { level = "deny", priority = 1 }
+redundant_pub_crate = { level = "allow", priority = 1 }
